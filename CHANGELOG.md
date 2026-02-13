@@ -7,17 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-- **Project Pivot: Sutra to Kāra.** The project has been completely re-envisioned. We have pivoted from the procedural "Sutra" language to "Kāra," a new language based on Role-Based Logic and the Kāraka framework. The `program...begin...end` syntax is deprecated in favor of an `Action: From: Into:` structure.
-
 ### Added
-- Defined the new Kāra vision, architecture, and roadmap.
-- Established "Self-Cleaning Arenas" as the target memory model.
+- **Language Specification:** Created a formal EBNF grammar and language guide as `chapter_1.md` and `chapter_2.md` in the `docs/book` directory.
+- **Lexer Implementation:** Implemented a complete, production-ready lexer (`src/lexer.rs`) capable of tokenizing the full Kāra language syntax, including Unicode support and comment handling.
+- Created `docs/DESIGN_RATIONALE.md` to document the *why* behind our language design choices.
+
+### Changed
+- **Finalized Core Syntax:** Solidified the Kāra language syntax based on a "Middle Way" approach, combining high-level readability with low-level expressive power.
+  - Reusable logic blocks are now `Sūtras` (`Define Sūtra: ...`).
+  - The internal logic of a `Sūtra` uses the Pipe Operator (`->`) for a compact, high-density data flow graph.
+- **Project Renaming:** The compiler executable is now officially named `karac`.
+
+### Removed
+- The conceptual names `Mandala` and `Vajra Arrow` have been replaced by `Sūtra` and the Pipe Operator (`->`) respectively.
 
 ## [0.0.1] - 2024-05-16
 
+### Changed
+- **Project Pivot: Sutra to Kāra.** The project was re-envisioned from a procedural language to a Role-Based logic language.
+
 ### Added
-- Initialized `mdBook` for project documentation.
-- Set up `CHANGELOG.md` to track notable changes.
-- Defined the initial core syntax for the (now deprecated) Sutra language.
-- Implemented the core lexer for tokenizing Sutra source code.
+- Initial `mdBook` setup, `CHANGELOG.md`, and deprecated Sutra lexer.

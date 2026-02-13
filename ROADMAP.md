@@ -1,39 +1,48 @@
-# Kāra Language Roadmap
+# Kāra Compiler Roadmap
 
-## 1. The Core Vision
+This document outlines the planned features and development milestones for the `karac` compiler.
 
-Kāra is a high-performance systems language designed to provide C-level speed with a radically different mental model. It rejects both the manual memory management overhead of C and the "Noun-centric" (Object-Oriented) complexity of modern languages.
+## Core Philosophy
 
-## 2. The Philosophy: Kāraka Logic
+Development will proceed in layers, focusing on building a solid foundation at each step. We will prioritize correctness and a robust testing strategy.
 
-The language is built on the ancient Sanskrit Kāraka framework, which focuses on **Roles** and **Actions** rather than "Objects." Code should read like a logical statement of intent.
+---
 
-- **No OOP:** There are no classes or inheritance. Instead, there are **Actions** (Verbs).
-- **Role-Based Data:** Data is not just a "parameter"; it fulfills a specific role in an action (e.g., the *Source* of an operation, the *Destination* of a result).
+### Version 0.1.0: Core Parser & Lexer (Current)
 
-## 3. The Architecture
+**Goal:** To have a fully compliant lexer and a foundational parser that can read and understand the complete Kāra syntax.
 
-- **Host & Backend:** The compiler is written in Rust (for safety) and targets LLVM IR (for hardware-agnostic performance).
-- **Memory Model:** We will implement **Self-Cleaning Arenas**. Memory is tied to the scope of an `Action`. When the action finishes, its memory arena is wiped clean instantly. This is more performant than a GC and far simpler than Rust's borrow checker.
-- **Logic Registry:** A centralized compiler component that maps `Action` names (e.g., `Add`) to specific hardware instructions or more complex operations.
+- [x] **Lexer:** The lexer is complete and recognizes all keywords, symbols, and literals defined in the `DESIGN_RATIONALE.md`.
+- [ ] **AST (Abstract Syntax Tree):** Define the core Rust structs that will represent the Kāra language's structure in memory (e.g., `Sutra`, `Record`, `Flow`, `Statement`, `Expression`, etc.).
+- [ ] **Parser:** Build a parser to construct an Abstract Syntax Tree (AST) that represents `Record` definitions, `Sūtra` definitions, and `flow` blocks.
+- [ ] **AST Validation:** Ensure the parser correctly builds AST nodes for our new, complete syntax.
 
-## 4. Milestones
+### Version 0.2.0: Semantic Analysis & Type Checking
 
-### Version 0.1.0: Core Engine
+**Goal:** To build a semantic analyzer that can validate the correctness of the AST.
 
-- [ ] **Lexer:** Re-implement the lexer for the Kāra syntax (`Action:`, `From:`, `Into:`).
-- [ ] **Parser:** Build a recursive descent parser to create a structured `KaraAction` AST (Abstract Syntax Tree).
-- [ ] **Stack Registry:** Implement the core logic for variable chaining, allowing the `Into` of one action to be used as a `From` in another.
-- [ ] **Compiler Backend:** Implement the "Vajra Bridge" to transpile the AST into basic LLVM IR for integer arithmetic.
+- [ ] **Symbol Table:** Implement a symbol table to track identifiers, types, and scopes.
+- [ ] **Type Checker:** Walk the AST and enforce Kāra's static typing rules. Ensure that actions are called with the correct types and that variable assignments are valid.
+- [ ] **Error Reporting:** Implement a robust error reporting system to give clear, actionable feedback to the developer about type mismatches or undefined variables.
 
-### Version 0.2.0: Foundational Library & Modularity
+### Version 0.3.0: LLVM IR Generation
 
-- [ ] **Modularization:** Split the monolithic compiler source into `lexer.rs`, `parser.rs`, and `compiler.rs`.
-- [ ] **Arena Allocator:** Implement the first version of the Self-Cleaning Arena memory model.
-- [ ] **Logic Registry Expansion:** Expand the registry to include `Multiply`, `Divide`, and basic Boolean logic.
+**Goal:** To translate the validated AST into LLVM Intermediate Representation (IR).
 
-### Future Goals (Post v0.2.0)
+- [ ] **LLVM Bridge:** Create the initial bridge to transpile the AST into basic LLVM IR. The first goal is to compile a simple `Sūtra` that performs integer arithmetic.
+- [ ] **Variable Emitter:** Implement the logic to emit LLVM IR for variable declarations, assignments, and lookups.
+- [ ] **Action Emitter:** Translate Kāra's data-flow actions (`->`) into LLVM instructions.
 
-- **Conditional Logic:** Introduce `Observe` and `Case` keywords for branching.
-- **Expanded Types:** Move beyond integers to support floats, strings, and custom data structures (`Records`).
-- **Standard Library:** Begin building a "Sūtra Library" of core actions.
+### Version 0.4.0: End-to-End (E2E) Testing Framework
+
+**Goal:** To create a test harness that compiles `.kara` files and verifies their output, proving the compiler works from source to execution.
+
+- [ ] **Test Runner:** Build a test runner within `cargo test` that can discover and execute `.kara` files from a dedicated test directory.
+- [ ] **`karac` Execution:** The runner will execute the `karac` binary on a source `.kara` file.
+- [ ] **Assertion:** The runner will compile the resulting LLVM IR, execute the binary, and assert that its output (e.g., stdout) matches the expected output.
+
+### Future Goals
+
+- **Conditional Logic:** Introduce declarative conditionals.
+- **Standard Library:** Build a core library of essential `Sūtras` (e.g., `Print`, `Sqrt`, `Compare`).
+- **Memory Management:** Implement the full memory model described in the language philosophy.
