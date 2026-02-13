@@ -1,8 +1,8 @@
-mod lexer;
-
-use lexer::{Lexer, Token};
+use karac::run_compiler;
 
 fn main() {
+    // This source code is a placeholder.
+    // In the future, this will be read from a file specified by the user.
     let source = r#"
 Record Point {
     x: i64,
@@ -23,16 +23,6 @@ flow main {
 }
 "#;
 
-    let mut lexer = Lexer::new(source.to_string());
-
-    println!("--- Lexer Output ---");
-    loop {
-        let token = lexer.next_token();
-        println!("{:?}", token);
-        if token == Token::EOF {
-            break;
-        }
-    }
-    println!("--- End Lexer Output ---");
-
+    // Call the library's main entry point
+    run_compiler(source);
 }

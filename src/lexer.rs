@@ -1,40 +1,4 @@
-/// Represents a single token in the Kāra source code.
-#[derive(Debug, PartialEq, Clone)]
-pub enum Token {
-    // Keywords
-    Record,
-    Define,
-    Sutra, // Note: Using Sutra to represent 'Sūtra' in the enum
-    Flow,
-    Let,
-    Action,
-    From,
-    Into,
-    Require,
-    Return,
-    As,
-
-    // Symbols
-    Colon,      // :
-    Semicolon,  // ;
-    Comma,      // ,
-    Equal,      // =
-    LParen,     // (
-    RParen,     // )
-    LBrace,     // {
-    RBrace,     // }
-    Arrow,      // ->
-    Dot,        // .
-
-    // Literals and Identifiers
-    Identifier(String),
-    Number(f64), // Representing all numbers as f64 for now
-    String(String),
-
-    // Special Tokens
-    EOF, // End of File
-    Illegal(String), // For unrecognized characters
-}
+use crate::token::Token;
 
 /// The Lexer, responsible for turning source code into a stream of tokens.
 pub struct Lexer {
@@ -193,4 +157,99 @@ fn is_identifier_start(ch: char) -> bool {
 /// Helper to check if a char can be part of an identifier.
 fn is_identifier_char(ch: char) -> bool {
     ch.is_alphanumeric() || ch == '_'
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::{Lexer, Token};
+
+    #[test]
+    fn test_full_syntax_lexing() {
+        let source = r#"
+// Define a complex data structure
+Record User {
+    id: i64,
+    name: String,
+    // email is optional
+    email: String, 
+}
+
+// Define a simple flow
+flow RegisterUser {
+    let new_user = User {
+        id: 101,
+        name: "Kāra",
+        email: "contact@kara.dev",
+    };
+
+    // Use the 'Sūtra' keyword
+    Sūtra: LogUser -> ();
+
+    new_user -> LogUser;
+}
+"#;
+
+        let mut lexer = Lexer::new(source.to_string());
+
+        let expected_tokens = vec![
+            Token::Record,
+            Token::Identifier("User".to_string()),
+            Token::LBrace,
+            Token::Identifier("id".to_string()),
+            Token::Colon,
+            Token::Identifier("i64".to_string()),
+            Token::Comma,
+            Token::Identifier("name".to_string()),
+            Token::Colon,
+            Token::Identifier("String".to_string()),
+            Token::Comma,
+            Token::Identifier("email".to_string()),
+            Token::Colon,
+            Token::Identifier("String".to_string()),
+            Token::Comma,
+            Token::RBrace,
+            Token::Flow,
+            Token::Identifier("RegisterUser".to_string()),
+            Token::LBrace,
+            Token::Let,
+            Token::Identifier("new_user".to_string()),
+            Token::Equal,
+            Token::Identifier("User".to_string()),
+            Token::LBrace,
+            Token::Identifier("id".to_string()),
+            Token::Colon,
+            Token::Number(101.0),
+            Token::Comma,
+            Token::Identifier("name".to_string()),
+            Token::Colon,
+            Token::String("Kāra".to_string()),
+            Token::Comma,
+            Token::Identifier("email".to_string()),
+            Token::Colon,
+            Token::String("contact@kara.dev".to_string()),
+            Token::Comma,
+            Token::RBrace,
+            Token::Semicolon,
+            Token::Sutra,
+            Token::Colon,
+            Token::Identifier("LogUser".to_string()),
+            Token::Arrow,
+            Token::LParen,
+            Token::RParen,
+            Token::Semicolon,
+            Token::Identifier("new_user".to_string()),
+            Token::Arrow,
+            Token::Identifier("LogUser".to_string()),
+            Token::Semicolon,
+            Token::RBrace,
+            Token::EOF,
+        ];
+
+        for expected_token in expected_tokens {
+            let actual_token = lexer.next_token();
+            println!("Expected: {:?}, Got: {:?}", expected_token, actual_token);
+            assert_eq!(actual_token, expected_token);
+        }
+    }
 }
