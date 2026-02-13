@@ -10,7 +10,7 @@ To create a robust, efficient, and well-documented compiler for the Sutra langua
 
 ### Version 0.1.0: Foundational Parser
 
-- [ ] Define the core syntax of the Sutra language.
+- [x] Define the core syntax of the Sutra language.
 - [ ] Implement a basic lexer to tokenize the source code.
 - [ ] Build a parser that can process a simple "Hello, World!" equivalent in Sutra.
 - [ ] Establish the initial Abstract Syntax Tree (AST) structure.

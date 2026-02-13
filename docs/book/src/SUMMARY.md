@@ -1,3 +1,4 @@
 # Summary
 
-- [Chapter 1](./chapter_1.md)
+- [Introduction](./chapter_1.md)
+- [Language Specification](./spec.md)

@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initialized `mdBook` for project documentation.
 - Set up `CHANGELOG.md` to track notable changes.
+- Defined the initial core syntax in the language specification.
