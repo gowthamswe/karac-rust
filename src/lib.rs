@@ -5,18 +5,18 @@ use crate::lexer::Lexer;
 use crate::token::Token;
 
 /// This is the main entry point for the Kāra compiler logic.
-/// It takes the source code as input and will eventually return a result
-/// indicating success or failure. For now, it just tokenizes and prints.
-pub fn run_compiler(source: &str) {
-    let mut lexer = Lexer::new(source.to_string());
+/// It takes the source code as input and returns a vector of tokens.
+pub fn run_compiler(source: &str) -> Vec<Token> {
+    let mut lexer = Lexer::new(source);
+    let mut tokens = Vec::new();
 
-    println!("--- Lexer Output ---");
     loop {
         let token = lexer.next_token();
-        println!("{:?}", token);
-        if token == Token::EOF {
+        let is_eof = token == Token::EOF;
+        tokens.push(token);
+        if is_eof {
             break;
         }
     }
-    println!("--- End Lexer Output ---");
+    tokens
 }

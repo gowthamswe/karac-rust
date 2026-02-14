@@ -1,24 +1,41 @@
 # Chapter 1: Introduction
 
-Welcome to Kāra, a programming language designed for clarity, performance, and the explicit flow of data.
+Welcome to Kāra, a programming language designed from the ground up for clarity, maintainability, and high performance on modern hardware.
 
-## The Core Idea: Programs as a Narrative
+## The Core Idea: An Intent-Driven Language
 
-At its heart, Kāra is built on a simple philosophy: a program should tell a story. It should describe not just *what* to do, but *how* data moves through the system from its origin to its destination. It treats data as the protagonist of the story, and actions as the events that transform it.
+Kāra is an **intent-driven language**. This means you, the programmer, focus on **declaring your intent**—what you want to achieve—rather than providing a rigid, step-by-step recipe for the computer to follow.
 
-To achieve this, Kāra is built around a few core concepts:
+In a traditional language, you might write:
+`result = step_one(data) -> step_two(result) -> step_three(result)`
 
-1.  **`Record`**: These are the "characters" in our story. They are simple, passive data structures that define the shape of the information we will be working with.
+You are defining a strict, sequential order. But what if `step_one` and `step_two` had no dependency on each other? You'd have to manually rewrite your code to handle parallelism.
 
-2.  **`Sūtra`**: A "thread" of logic. A `Sūtra` is a reusable function or procedure that takes data, performs a series of actions on it, and returns a result. It contains the detailed, step-by-step implementation of a task.
+In Kāra, you declare the relationships between data and operations. This frees your code from a strict sequential order, allowing the Kāra compiler to automatically optimize for performance.
 
-3.  **`flow`**: This is the main narrative of the program. It orchestrates the high-level story, showing how data records are created and passed to different `Sūtras` to achieve the final goal.
+### Automatic Parallelism, No Keywords
+
+Because Kāra understands the dependencies of your data, it can automatically run independent operations in parallel. You get the benefit of multi-core performance **for free**, without ever writing `thread.spawn()` or using a `Mutex`.
+
+### Asynchronous by Nature
+
+Similarly, Kāra has no need for `async/await`. When you declare an action that needs to wait for I/O (like a file read or a network request), the runtime can automatically suspend that work and run other independent parts of your program. The complexity is handled by the runtime, not by you.
+
+## The Building Blocks of Intent
+
+Kāra provides a few core concepts to enable this powerful model:
+
+1.  **`Record`**: Simple, passive data structures that define the shape of your information.
+
+2.  **`fn`**: A reusable, self-contained declaration of a data transformation. This is where you define the "how" for a specific piece of logic.
+
+3.  **`flow`**: The top-level orchestration layer. This is where you compose your `fn` transformations to describe the high-level story of your program.
 
 ## Two Syntaxes, One Philosophy
 
-Kāra has a unique design that provides two different syntaxes, each tailored for a specific job:
+To serve both high-level orchestration and low-level implementation, Kāra uses two syntaxes built on one core principle: **Source -> Action -> Destination**.
 
-*   **The Orchestration Syntax (`flow` blocks):** For the high-level view, the syntax is verbose and self-documenting. It reads like a set of instructions.
+*   **The Orchestration Syntax (`flow` blocks):** A verbose, self-documenting syntax for declaring the high-level intent.
 
     ```rust
     Action: CalculateDistance
@@ -27,12 +44,10 @@ Kāra has a unique design that provides two different syntaxes, each tailored fo
       Into: final_distance
     ```
 
-*   **The Implementation Syntax (`Sūtra` bodies):** For writing the actual logic, the syntax is dense, efficient, and uses a `->` operator to show the explicit flow of data from one operation to the next.
+*   **The Implementation Syntax (`fn` bodies):** A dense, efficient syntax for implementing the logic inside a function, using the `->` pipe operator to show the explicit flow of data.
 
     ```rust
     (p1.x, p2.x) -> Subtract -> dx
     ```
 
-Both syntaxes are built on the exact same principle: **`Source -> Action -> Destination`**. This consistency is the key to Kāra's design.
-
-In the following chapters, we will walk you through building your first Kāra program, exploring each of these concepts in detail. You will learn how to define your own data types, write powerful, reusable logic, and compose it all into a clear and maintainable program.
+In the following chapters, we will walk you through building your first Kāra program, exploring how to combine these concepts to write code that is clear, powerful, and effortlessly fast.

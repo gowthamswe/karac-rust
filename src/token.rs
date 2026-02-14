@@ -1,37 +1,33 @@
-/// Represents a single token in the Kāra source code.
+// src/token.rs
+
+//! Defines the tokens that are produced by the lexer.
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     // Keywords
-    Record,
-    Define,
-    Sutra, // Note: Using Sutra to represent 'Sūtra' in the enum
+    Fn,
     Flow,
+    Record,
     Let,
-    Action,
-    From,
-    Into,
-    Require,
-    Return,
-    As,
+    If,
 
     // Symbols
-    Colon,      // :
-    Semicolon,  // ;
-    Comma,      // ,
-    Equal,      // =
-    LParen,     // (
-    RParen,     // )
-    LBrace,     // {
-    RBrace,     // }
-    Arrow,      // ->
-    Dot,        // .
+    LeftParen,    // (
+    RightParen,   // )
+    LeftBrace,    // {
+    RightBrace,   // }
+    Arrow,        // ->
+    Equal,        // =
+    Colon,        // :
+    Comma,        // ,
+    Semicolon,    // ;
+    Plus,         // +
 
-    // Literals and Identifiers
+    // Literals
     Identifier(String),
-    Number(f64), // Representing all numbers as f64 for now
+    Number(f64),
     String(String),
 
-    // Special Tokens
-    EOF, // End of File
-    Illegal(String), // For unrecognized characters
+    // End of File
+    EOF,
 }

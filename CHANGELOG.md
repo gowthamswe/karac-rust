@@ -1,24 +1,27 @@
-# Kāra Compiler Changelog
+# Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to the Kāra language will be documented in this file.
 
-## [Unreleased] - Current Progress
+---
 
-### Completed
+## [Unreleased] - YYYY-MM-DD
 
-- **Project Structure Refactoring**:
-  - Separated the core compiler logic into a distinct library crate (`src/lib.rs`).
-  - Maintained the executable binary as a thin wrapper (`src/main.rs`) around the library.
-- **Lexer Module (`src/lexer.rs`)**:
-  - The lexer is feature-complete for the initial language syntax.
-  - Added a comprehensive unit test suite inside the lexer module to validate tokenization of a full source code snippet.
-- **Token Module (`src/token.rs`)**:
-  - Defined all necessary tokens for the language syntax.
-- **Version Control**:
-  - Successfully committed and pushed all recent changes to the remote repository.
+### Added
 
-### Next Step
+-   **Lexer Implementation:** A fully-featured lexer that tokenizes Kāra source code, including keywords, symbols, identifiers, numbers, and strings.
+-   **Lexer Test Suite:** A comprehensive integration test to validate the lexer's correctness.
+-   **Initial Project Structure:** Compiler, documentation, and VS Code settings.
 
-- **Implement the Parser and Abstract Syntax Tree (AST)**:
-  - **1. Define AST:** Create `src/ast.rs` to define the data structures (structs and enums) that will represent the hierarchical structure of the code (e.g., `Record`, `Flow`, `Statement`, `Expression`).
-  - **2. Create Parser:** Create `src/parser.rs` to house the `Parser`, which will consume the token stream from the Lexer and produce the AST.
+### Changed
+
+-   **Refined Language Design:** Solidified the roles of `record`, `fn`, and `flow`.
+-   **Unified Function Call Syntax:** Standardized on the `->` operator for all named `fn` and `flow` calls, removing the separate `do` keyword.
+-   **Introduced Inline Expressions:** Added support for ergonomic, C-style expressions (`let a = b + c;`) for simple arithmetic and logic, which are de-sugared by the compiler into a dataflow graph.
+-   **Clarified Immutability:** Formally defined that `let` creates an immutable binding, not a mutable variable. Re-assignment is a compile-time error. This is the key enforcement mechanism for the dataflow model.
+-   **Formalized Iteration:** Defined that all loops are to be implemented via recursive `flow` calls, not with traditional `for` or `while` keywords.
+-   **Formalized Conditionals:** Added the `if` statement for conditional control flow.
+
+### Next Steps
+
+-   **Stage 2: Syntactic Analysis (Parser):** Build the parser to construct an Abstract Syntax Tree (AST) from the token stream. The AST must support nodes for our new inline expressions.
+-   **Stage 3: Semantic Analysis & Graph Building:** Implement the semantic analyzer, which will walk the AST and build the final, optimized dataflow graph. This stage will include the "de-sugaring" of inline expressions.

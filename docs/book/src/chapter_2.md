@@ -1,160 +1,104 @@
 # Chapter 2: Language Specification
 
-This chapter provides the official reference grammar for the Kāra language. This is the source of truth for the language's syntax.
-
-We use a form of Extended Backus-Naur Form (EBNF) to describe the syntax:
-
-*   `UPPERCASE` denotes a terminal token from the lexer (e.g., `IDENTIFIER`, `LET`).
-*   `camelCase` denotes a production rule (a non-terminal).
-*   `'text'` denotes a literal string.
-*   `|` denotes an alternative.
-*   `[]` denotes an optional part.
-*   `{}` denotes zero or more repetitions.
+This chapter provides the formal specification of the Kāra language grammar. It is intended for compiler developers and language enthusiasts.
 
 ---
 
-## 1. Program Structure
+## 1. Top-Level Statements
 
-A Kāra program is a collection of top-level definitions.
+A Kāra source file is composed of a series of top-level statements. These are the only constructs that can appear at the top level of a file.
 
-```ebnf
-program = { topLevelDefinition } ;
+-   **Record Definition:** `record <RecordName> { <field>: <Type>, ... }`
+-   **Function Definition:** `fn <FunctionName>(<param>: <Type>, ...) -> (<return_name>: <Type>, ...) { ... }`
+-   **Flow Definition:** `flow <FlowName>(<param>: <Type>, ...) { ... }`
 
-topLevelDefinition = recordDefinition | sutraDefinition | flowDefinition ;
-```
+## 2. `record` Definition
 
----
-
-## 2. Lexical Elements
-
-(Details on comments and identifiers as before)
-
----
-
-## 3. `Record` Definitions
-
-(Details on Record definitions as before)
-
----
-
-## 4. `Sūtra` Definitions
-
-(Details on Sūtra definitions as before)
-
----
-
-## 5. `flow` Definitions
-
-(Details on flow definitions as before)
-
----
-
-## 6. Statements and Expressions
-
-Statements are the units of execution within `Sūtra` and `flow` bodies.
-
-### Grammar
-
-```ebnf
-statement = letBinding | actionCall ; // For now
-```
-
-### Let Bindings
-
-A `let` binding introduces a new variable.
-
-```ebnf
-letBinding = 'let' IDENTIFIER '=' expression ';' ;
-```
-
-### Expressions
-
-An expression is a piece of code that evaluates to a value.
-
-```ebnf
-expression = literal | recordLiteral | variableAccess ; 
-```
-
-#### Literals
-
-`literal = NUMBER | STRING ;`
-
-#### Record Literals
-
-`recordLiteral = IDENTIFIER '{' [ fieldInitializer { ',' fieldInitializer } [ ',' ] ] '}' ;`
-
-`fieldInitializer = IDENTIFIER ':' expression ;`
-
-#### Variable and Field Access
-
-This expression is used to access the value of a variable or a field within a `Record`.
-
-```ebnf
-variableAccess = IDENTIFIER [ '.' IDENTIFIER ] ;
-```
-
-**Examples:**
-```rust
-let a = my_variable;      // Access a variable
-let b = my_record.x;    // Access field 'x' of a record
-```
-
-### Action Calls
-
-An `actionCall` invokes a `Sūtra` to perform a transformation. There are two syntactic forms.
-
-#### Verbose Syntax
-
-This form is self-documenting and primarily used for orchestration in `flow` blocks.
-
-```ebnf
-verboseActionCall = 'Action' ':' IDENTIFIER
-                    { fromClause }
-                    [ intoClause ] ';' ;
-
-fromClause = 'From' ':' IDENTIFIER '=' expression ;
-
-intoClause = 'Into' ':' IDENTIFIER ;
-```
-
-- It begins with `Action:`, followed by the name of the `Sūtra` to call.
-- `From:` clauses map local variables to the required inputs of the `Sūtra`.
-- The optional `Into:` clause specifies the variable to store the `Sūtra`'s output.
-- The entire statement ends with a semicolon `;`.
-
-**Example:**
-```rust
-// Assuming a Sūtra 'CalculateDistance' that takes p1 and p2
-Action: CalculateDistance
-  From: p1 = origin_point
-  From: p2 = destination_point
-  Into: distance_result;
-```
-
-#### Pipe Syntax
-
-This form is dense and designed for chaining operations within `Sūtra` bodies.
-
-```ebnf
-pipeActionCall = source '->' IDENTIFIER '->' destination ';' ;
-
-source = IDENTIFIER | tuple ;
-destination = IDENTIFIER | tuple ;
-
-tuple = '(' IDENTIFIER { ',' IDENTIFIER } ')' ;
-```
-
-- It represents the flow of data from a `source`, through an `action`, to a `destination`.
-- The `source` and `destination` can be a single variable or a parenthesized, comma-separated tuple of variables.
-- The `action` is the name of the `Sūtra` to execute.
-- The statement ends with a semicolon `;`.
-
-**Example:**
+Defines a new composite data type.
 
 ```rust
-// Single source and destination
-input -> Square -> squared_output;
+// Defines a record with two fields.
+record Point {
+    x: Number,
+    y: Number
+}
+```
 
-// Multiple sources and destinations (hypothetical)
-(a, b) -> AddAndSubtract -> (sum, difference);
+## 3. `fn` (Pure Function) Definition
+
+Defines a stateless, pure data transformation.
+
+```rust
+// Defines a function that takes a Point and returns a Number.
+fn CalculateDistance(p: Point) -> (dist: Number) {
+    // Function body composed of dataflow statements
+    // or inline expressions.
+}
+```
+
+## 4. `flow` (Impure Process) Definition
+
+Defines a stateful process that can contain side-effects.
+
+```rust
+// Defines a flow that takes a String and performs an action.
+flow PrintMessage(message: String) {
+    // Flow body composed of dataflow statements,
+    // inline expressions, conditionals, and recursion.
+}
+```
+
+## 5. Statements within `fn` and `flow`
+
+### Dataflow Statement
+
+Calls a named `fn` or `flow`.
+
+-   **Syntax:** `(<source_vars>) -> <FunctionName> -> (<dest_vars>);`
+
+```rust
+(x, y) -> Add -> z;
+```
+
+### Let Statement (Immutable Binding)
+
+Binds the result of a simple expression to an immutable name.
+
+-   **Syntax:** `let <name> = <expression>;`
+
+```rust
+let a = b * c + d;
+```
+
+## 6. Control Flow
+
+Control flow is managed through conditional statements and recursive `flow` calls.
+
+### Conditional (`if`) Statement
+
+The `if` statement executes a block of code if a condition is true. It does not have an `else` clause.
+
+-   **Syntax:** `if <boolean_expression> { ... }`
+
+```rust
+let is_valid = x > 10;
+if is_valid {
+    (value = "Valid") -> Print;
+}
+```
+
+### Iteration (Looping)
+
+Loops are not a built-in syntax but are implemented via **recursive `flow` calls**. A `flow` calls itself to continue an iteration, passing new state as parameters.
+
+```rust
+flow Countdown(n: Number) {
+    (value = n) -> Print;
+
+    let should_continue = n > 0;
+    if should_continue {
+        let next_n = n - 1;
+        (n = next_n) -> Countdown; // Recursion performs the loop.
+    }
+}
 ```
