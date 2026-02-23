@@ -6,24 +6,24 @@ This chapter discusses the practical aspects of how a Kāra program interacts wi
 
 ## 1. The Kāra Runtime and Built-in Functions
 
-The Kāra runtime provides a set of special, globally available functions (`fn`) that are essential for I/O and basic data manipulation. You do not need to import them. These are part of the standard library.
+The Kāra runtime provides a set of special, globally available functions that are essential for I/O and basic data manipulation. You do not need to import them. These are part of the standard library.
 
 Key built-in functions include:
 
 *   **`Print`**: Prints a `String` value to the standard output.
 *   **`Read`**: Reads a line of text from the standard input.
 *   **`ToString`**: Converts a value of any type into its `String` representation.
-*   **`ParseNumber`**: Attempts to parse a `String` into a `Number`.
+*   **`ParseI64`**: Attempts to parse a `String` into an `i64`.
 
 **Example:**
 
 ```rust
 flow main {
-    Action: Print From: value = "Please enter your name:";
+    (value = "Please enter your name:") -> Print;
 
-    Action: Read Into: user_name;
+    () -> Read -> (user_name);
 
-    Action: Print From: value = "Hello, " + user_name;
+    (value = "Hello, " + user_name) -> Print;
 }
 ```
 
@@ -45,11 +45,11 @@ The `match` statement checks a variable. The `with` clauses define the patterns 
 
 ```rust
 flow main {
-    Action: Print From: value = "Enter a number:";
-    Action: Read Into: text_input;
+    (value = "Enter a number:") -> Print;
+    () -> Read -> (text_input);
     
-    // ParseNumber might succeed or fail.
-    Action: ParseNumber From: value = text_input Into: number_result;
+    // ParseI64 might succeed or fail.
+    (value = text_input) -> ParseI64 -> (number_result);
 
     // We use 'match' to handle both possibilities.
     match number_result {
@@ -57,12 +57,13 @@ flow main {
             // This block runs on success.
             // 'num' contains the successfully parsed number.
             let product = num * 2;
-            Action: Print From: value = "The result is: " + ToString(product);
+            (value = product) -> ToString -> (product_str);
+            (value = "The result is: " + product_str) -> Print;
         }
         with Err(error_message) {
             // This block runs on failure.
             // 'error_message' contains a string explaining the error.
-            Action: Print From: value = "Error: " + error_message;
+            (value = "Error: " + error_message) -> Print;
         }
     }
 }

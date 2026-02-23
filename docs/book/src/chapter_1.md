@@ -7,7 +7,7 @@ Welcome to Kāra, a programming language designed from the ground up for clarity
 Kāra is an **intent-driven language**. This means you, the programmer, focus on **declaring your intent**—what you want to achieve—rather than providing a rigid, step-by-step recipe for the computer to follow.
 
 In a traditional language, you might write:
-`result = step_one(data) -> step_two(result) -> step_three(result)`
+`result = step_three(step_two(step_one(data)))`
 
 You are defining a strict, sequential order. But what if `step_one` and `step_two` had no dependency on each other? You'd have to manually rewrite your code to handle parallelism.
 
@@ -25,29 +25,25 @@ Similarly, Kāra has no need for `async/await`. When you declare an action that 
 
 Kāra provides a few core concepts to enable this powerful model:
 
-1.  **`Record`**: Simple, passive data structures that define the shape of your information.
+1.  **`record`**: Simple, passive data structures that define the shape of your information.
 
-2.  **`fn`**: A reusable, self-contained declaration of a data transformation. This is where you define the "how" for a specific piece of logic.
+2.  **`fn`**: A reusable, self-contained declaration of a pure data transformation.
 
-3.  **`flow`**: The top-level orchestration layer. This is where you compose your `fn` transformations to describe the high-level story of your program.
+3.  **`flow`**: The top-level orchestration layer where you compose `fn`s and other `flow`s to describe the high-level story of your program.
 
-## Two Syntaxes, One Philosophy
+## A Single, Unified Syntax
 
-To serve both high-level orchestration and low-level implementation, Kāra uses two syntaxes built on one core principle: **Source -> Action -> Destination**.
+Kāra uses a single, consistent syntax built on one core principle: **data flow**. The `->` operator clearly shows the movement of data between functions.
 
-*   **The Orchestration Syntax (`flow` blocks):** A verbose, self-documenting syntax for declaring the high-level intent.
+This unified syntax is used for both high-level orchestration in a `flow` and for low-level implementation details in a `fn`.
 
-    ```rust
-    Action: CalculateDistance
-      From: p1 = origin
-      From: p2 = target
-      Into: final_distance
-    ```
+```rust
+// The `->` operator creates a clear, readable pipeline of operations.
 
-*   **The Implementation Syntax (`fn` bodies):** A dense, efficient syntax for implementing the logic inside a function, using the `->` pipe operator to show the explicit flow of data.
-
-    ```rust
-    (p1.x, p2.x) -> Subtract -> dx
-    ```
+flow main {
+    (user_id = "user-123") -> get_user_from_db -> (user_record);
+    (user = user_record) -> send_welcome_email;
+}
+```
 
 In the following chapters, we will walk you through building your first Kāra program, exploring how to combine these concepts to write code that is clear, powerful, and effortlessly fast.

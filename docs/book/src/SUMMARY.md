@@ -1,6 +1,7 @@
-# Summary
-
+- [Compiler Architecture](./00_compiler_architecture_decision.md)
 - [Introduction](./chapter_1.md)
 - [Language Specification](./chapter_2.md)
 - [Language Concepts](./chapter_3.md)
-- [Runtime, I/O, and Error Handling](./chapter_4.md)
+- [Runtime and I/O](./chapter_4.md)
+- [Parsing and AST](./chapter_5.md)
+- [The Kāra CLI](./chapter_6.md)

@@ -34,22 +34,15 @@ Orchestrates `fn`s and other `flow`s. A `flow` is the only place you are allowed
 
 ---
 
-## 3. Syntax: Dataflow (`->`) vs. Inline Expressions
+## 3. Syntax: Dataflow (`->`)
 
-Kāra provides two syntaxes for expressing logic, allowing you to choose the best tool for the job.
-
-### The Dataflow Operator: `->`
-
-The `->` operator is for calling named functions (`fn` or `flow`). It makes the high-level dependencies in your program clear and easy to see.
+Kāra uses a single, consistent syntax for expressing logic: the dataflow operator (`->`). It is used for calling named functions (`fn` or `flow`) and makes the high-level dependencies in your program clear and easy to see.
 
 ```rust
-// Use `->` to show the flow of data between major functions.
-"user-123" -> BuildGetUserRequest -> get_user_plan;
-
-(plan = get_user_plan) -> DoHttpRequest -> (http_response);
+// Use `->` to show the flow of data between functions.
+(user_id = "user-123") -> get_user_plan -> (plan);
+(plan = plan) -> execute_plan -> (http_response);
 ```
-
-### Inline Expressions & Immutable State
 
 For common arithmetic and logical operations, Kāra supports familiar inline expressions with the `let` keyword. This provides a readable syntax for low-level calculations.
 
@@ -63,7 +56,7 @@ let dist_sq = (dx * dx) + (dy * dy);
 let dist_sq = dist_sq * 2.0; // ERROR: `dist_sq` cannot be redeclared.
 ```
 
-This rule is fundamental. It prevents imperative-style programming and ensures that the underlying dataflow model is preserved, even when using the convenient `=` syntax.
+This rule is fundamental. It prevents imperative-style programming and ensures that the underlying dataflow model is preserved.
 
 ---
 
@@ -76,14 +69,14 @@ The strict separation of pure `fn`s and impure `flow`s is a core feature.
 You cannot `Print` from within an `fn`. To debug, modify the `fn` to return the intermediate values you want to inspect, then `Print` them from the `flow`.
 
 ```rust
-fn MyFunction(a: Number) -> (result, debug_val) {
+fn my_function(a: i64) -> (i64, i64) {
     let intermediate_value = a * 2;
     let final_result = intermediate_value + 10;
-    (final_result, intermediate_value) -> (result, debug_val);
+    // return (final_result, intermediate_value);
 }
 
 flow main {
-    (a = 5) -> MyFunction -> (the_result, my_debug_val);
+    (a = 5) -> my_function -> (the_result, my_debug_val);
     (value = my_debug_val) -> Print;
 }
 ```
@@ -98,38 +91,22 @@ record HttpRequestPlan {
     method: String
 }
 
-fn BuildGetUserRequest(user_id: String) -> HttpRequestPlan {
-    HttpRequestPlan {
-        url: "/users/" + user_id,
-        method: "GET"
-    } -> result;
+fn build_get_user_request(user_id: String) -> HttpRequestPlan {
+    // return HttpRequestPlan {
+    //     url: "/users/" + user_id,
+    //     method: "GET"
+    // };
 }
 
 flow main {
-    "user-123" -> BuildGetUserRequest -> get_user_plan;
-    (plan = get_user_plan) -> DoHttpRequest -> (http_response);
+    (user_id = "user-123") -> build_get_user_request -> (plan);
+    (plan = plan) -> execute_request -> (http_response);
 }
 ```
 
 ---
 
-## 5. Data Types
-
-Kāra includes primitive types and allows you to define your own composite types.
-
-### Primitives
-
-*   **`Number`**: Represents numeric values (`10`, `3.14`).
-*   **`String`**: Represents text (`"Hello, World!"`).
-*   **`Boolean`**: Represents truth values (`true`, `false`).
-
-### Records
-
-A composite data structure defined by a top-level `record` blueprint.
-
----
-
-## 6. Iteration: Looping via Recursion
+## 5. Iteration: Looping via Recursion
 
 Because Kāra enforces immutable bindings (`let`), traditional loop constructs like `for` and `while` do not exist. They are fundamentally based on mutation, which Kāra prohibits.
 
@@ -143,7 +120,7 @@ Here is how you would write a counter that prints numbers from 0 to 4:
 
 ```rust
 // This flow represents one step of the counting process.
-flow CounterLoop(current_count: Number) {
+flow counter_loop(current_count: i64) {
     // Use the current state.
     (value = current_count) -> Print;
 
@@ -156,13 +133,13 @@ flow CounterLoop(current_count: Number) {
         let next_count = current_count + 1;
 
         // 2. Recurse: Call the flow again, passing the new state.
-        (current_count = next_count) -> CounterLoop;
+        (current_count = next_count) -> counter_loop;
     }
 }
 
 flow main {
     // Start the loop by calling it with the initial state.
-    (current_count = 0) -> CounterLoop;
+    (current_count = 0) -> counter_loop;
 }
 ```
 

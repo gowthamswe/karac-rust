@@ -47,14 +47,40 @@ impl<'a> Lexer<'a> {
             b'}' => self.make_token(Token::RightBrace),
             b',' => self.make_token(Token::Comma),
             b':' => self.make_token(Token::Colon),
-            b'=' => self.make_token(Token::Equal),
             b';' => self.make_token(Token::Semicolon),
             b'+' => self.make_token(Token::Plus),
+
+            b'!' => {
+                let token = if self.match_char(b'=') {
+                    Token::BangEqual
+                } else {
+                    Token::Bang
+                };
+                self.make_token(token)
+            }
+            b'=' => self.make_token(Token::Equal),
+            b'<' => {
+                let token = if self.match_char(b'=') {
+                    Token::LessThanOrEqual
+                } else {
+                    Token::LessThan
+                };
+                self.make_token(token)
+            }
+            b'>' => {
+                let token = if self.match_char(b'=') {
+                    Token::GreaterThanOrEqual
+                } else {
+                    Token::GreaterThan
+                };
+                self.make_token(token)
+            }
+
             b'-' => {
                 if self.match_char(b'>') {
                     self.make_token(Token::Arrow)
                 } else {
-                    self.error_token("Unexpected character.")
+                    self.error_token("Unexpected character. Expected '->'.")
                 }
             }
             b'"' => self.string(),
@@ -63,33 +89,35 @@ impl<'a> Lexer<'a> {
             _ => self.error_token("Unexpected character."),
         }
     }
-    /// Handles number literals.
+    
     fn number(&mut self) -> Token {
-        while is_digit(self.peek()) {
-            self.advance();
-        }
+        while is_digit(self.peek()) { self.advance(); }
 
-        // Look for a fractional part.
+        let mut is_float = false;
         if self.peek() == b'.' && is_digit(self.peek_next()) {
-            // Consume the "."
+            is_float = true;
             self.advance();
-
-            while is_digit(self.peek()) {
-                self.advance();
-            }
+            while is_digit(self.peek()) { self.advance(); }
         }
 
         let text = std::str::from_utf8(&self.source[self.start..self.current]).unwrap();
-        let value: f64 = text.parse().unwrap();
-        self.make_token(Token::Number(value))
+        
+        if is_float {
+            text.parse::<f64>().ok().map_or_else(
+                || self.error_token("Invalid float literal."),
+                |v| self.make_token(Token::Float(v)),
+            )
+        } else {
+            text.parse::<i64>().ok().map_or_else(
+                || self.error_token("Invalid integer literal."),
+                |v| self.make_token(Token::Integer(v)),
+            )
+        }
     }
 
-    /// Handles string literals.
     fn string(&mut self) -> Token {
         while self.peek() != b'"' && !self.is_at_end() {
-            if self.peek() == b'\n' {
-                self.line += 1;
-            }
+            if self.peek() == b'\n' { self.line += 1; }
             self.advance();
         }
 
@@ -97,57 +125,52 @@ impl<'a> Lexer<'a> {
             return self.error_token("Unterminated string.");
         }
 
-        // The closing ".
-        self.advance();
-
-        // Trim the surrounding quotes.
+        self.advance(); // The closing quote
         let value = std::str::from_utf8(&self.source[self.start + 1..self.current - 1])
             .unwrap()
             .to_string();
-        self.make_token(Token::String(value))
+        self.make_token(Token::StringLiteral(value))
     }
 
-    /// Handles identifiers and keywords.
     fn identifier(&mut self) -> Token {
         while is_alpha(self.peek()) || is_digit(self.peek()) {
             self.advance();
         }
 
         let text = std::str::from_utf8(&self.source[self.start..self.current]).unwrap();
-        let token_type = self.identifier_type(text);
-
-        self.make_token(token_type)
+        self.make_token(self.identifier_type(text))
     }
 
-    /// Determines if an identifier is a keyword or a user-defined identifier.
     fn identifier_type(&self, text: &str) -> Token {
         match text {
             "fn" => Token::Fn,
             "flow" => Token::Flow,
             "record" => Token::Record,
+            "type" => Token::Type,
             "let" => Token::Let,
             "if" => Token::If,
+            "true" => Token::True,
+            "false" => Token::False,
             _ => Token::Identifier(text.to_string()),
         }
     }
 
-    /// Skips whitespace and comments.
     fn skip_whitespace(&mut self) {
         loop {
             match self.peek() {
-                b' ' | b'\r' | b'\t' => {
-                    self.advance();
-                }
+                b' ' | b'\r' | b'\t' => { self.advance(); }
                 b'\n' => {
                     self.line += 1;
                     self.advance();
+                }
+                b'/' if self.peek_next() == b'/' => {
+                    while self.peek() != b'\n' && !self.is_at_end() { self.advance(); }
                 }
                 _ => break,
             }
         }
     }
 
-    /// Checks if the current character matches the expected one.
     fn match_char(&mut self, expected: u8) -> bool {
         if self.is_at_end() || self.source[self.current] != expected {
             false
@@ -157,44 +180,30 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    /// Consumes and returns the next character in the source.
     fn advance(&mut self) -> u8 {
         self.current += 1;
         self.source[self.current - 1]
     }
 
-    /// Peeks at the current character without consuming it.
     fn peek(&self) -> u8 {
-        if self.is_at_end() {
-            b'\0' // Null byte for end of file
-        } else {
-            self.source[self.current]
-        }
+        if self.is_at_end() { b'\0' } else { self.source[self.current] }
     }
 
-    /// Peeks at the next character without consuming it.
     fn peek_next(&self) -> u8 {
-        if self.current + 1 >= self.source.len() {
-            b'\0'
-        } else {
-            self.source[self.current + 1]
-        }
+        if self.current + 1 >= self.source.len() { b'\0' } else { self.source[self.current + 1] }
     }
 
-    /// Checks if the lexer has reached the end of the source code.
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
 
-    /// Creates a token of the given type.
     fn make_token(&self, token_type: Token) -> Token {
         token_type
     }
 
-    /// Creates an error token.
     fn error_token(&self, message: &str) -> Token {
-        eprintln!("[line {}] Error: {}", self.line, message);
-        Token::EOF
+        eprintln!("[line {}] Error at '{}': {}", self.line, std::str::from_utf8(&self.source[self.start..self.current]).unwrap_or(""), message);
+        Token::Error
     }
 }
 

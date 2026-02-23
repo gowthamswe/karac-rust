@@ -8,26 +8,40 @@ pub enum Token {
     Fn,
     Flow,
     Record,
+    Type,
     Let,
     If,
+    True,
+    False,
 
-    // Symbols
-    LeftParen,    // (
-    RightParen,   // )
-    LeftBrace,    // {
-    RightBrace,   // }
-    Arrow,        // ->
-    Equal,        // =
-    Colon,        // :
-    Comma,        // ,
-    Semicolon,    // ;
-    Plus,         // +
+    // Single-character Symbols
+    LeftParen,  // (
+    RightParen, // )
+    LeftBrace,  // {
+    RightBrace, // }
+    Colon,      // :
+    Comma,      // ,
+    Semicolon,  // ;
+    Plus,       // +
+
+    // One or two character Symbols
+    Bang,               // !
+    BangEqual,          // !=
+    Equal,              // =
+    // TODO: Add EqualEqual ==
+    GreaterThan,        // >
+    GreaterThanOrEqual, // >=
+    LessThan,           // <
+    LessThanOrEqual,    // <=
+    Arrow,              // ->
 
     // Literals
     Identifier(String),
-    Number(f64),
-    String(String),
+    Integer(i64),
+    Float(f64),
+    StringLiteral(String),
 
-    // End of File
+    // Special Tokens
+    Error,
     EOF,
 }
