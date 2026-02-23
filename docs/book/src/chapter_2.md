@@ -19,17 +19,12 @@ The language provides a set of built-in primitive types:
 
 ### 1.2. Semantic Types (Roles)
 
-A `type` definition creates a new, **semantically distinct type** that is represented by an underlying primitive. This is the core mechanism for providing "Semantic Safety" and giving optimization hints to the compiler.
+A `type` definition creates a new, **semantically distinct type** that is represented by an underlying primitive.
 
 ```rust
 // Syntax: type <NewTypeName> <UnderlyingType>;
-
 type OrderId i64;
-type CustomerId i64;
-type PriceUSD f64;
 ```
-
-Operations between a semantic type and its underlying primitive are permitted and result in the semantic type. Operations between two different semantic types are a compile-time error. Explicit conversion is done via the `as` keyword.
 
 ### 1.3. Record Types
 
@@ -56,31 +51,55 @@ file ::= { topLevelDefinition };
 topLevelDefinition ::= recordDefinition | typeDefinition | flowDefinition | functionDefinition;
 
 (* Definitions *)
-recordDefinition ::= 'record' IDENTIFIER '{' { fieldDefinition } '}';
-fieldDefinition ::= IDENTIFIER ':' IDENTIFIER ';';
+recordDefinition ::= 'record' IDENTIFIER '{' [ fieldDefinition { ',' fieldDefinition } [','] ] '}';
+fieldDefinition ::= IDENTIFIER ':' IDENTIFIER;
 
 typeDefinition ::= 'type' IDENTIFIER IDENTIFIER ';';
 
-flowDefinition ::= 'flow' IDENTIFIER '(' [paramList] ')' '{' { statement } '}';
-functionDefinition ::= 'fn' IDENTIFIER '(' [paramList] ')' [ '->' '(' [paramList] ')' ] '{' { statement } '}';
+flowDefinition ::= 'flow' IDENTIFIER '(' [paramList] ')' blockExpression;
+functionDefinition ::= 'fn' IDENTIFIER '(' [paramList] ')' [ '->' returnType ] blockExpression;
 
-paramList ::= IDENTIFIER ':' IDENTIFIER { ',' IDENTIFIER ':' IDENTIFIER };
+paramList ::= IDENTIFIER ':' IDENTIFIER { ',' IDENTIFIER ':' IDENTIFIER } [','];
+returnType ::= IDENTIFIER | '(' IDENTIFIER { ',' IDENTIFIER } [','] ')';
 
-(* Statements *)
-statement ::= letBinding | pipelineStatement;
+(* Block & Statements *)
+blockExpression ::= '{' { statement } [ expression ] '}'; (* Final expression is the return value *)
+statement ::= letBinding | pipelineStatement | ifStatement | expressionStatement;
 
 letBinding ::= 'let' IDENTIFIER '=' expression ';';
+expressionStatement ::= expression ';';
 
-pipelineStatement ::= expression '->' IDENTIFIER { '->' IDENTIFIER } ';';
+ifStatement ::= 'if' expression blockExpression [ 'else' ( ifStatement | blockExpression ) ];
+
+pipelineStatement ::= ( argumentList | expression ) '->' IDENTIFIER { '->' IDENTIFIER } [ '->' outputBinding ] ';';
+argumentList ::= '(' [ namedArgument { ',' namedArgument } [','] ] ')';
+namedArgument ::= IDENTIFIER '=' expression;
+outputBinding ::= IDENTIFIER | '(' IDENTIFIER { ',' IDENTIFIER } [','] ')';
 
 (* Expressions & Literals *)
-expression ::= IDENTIFIER | literal;
+expression     ::= comparison ;
+comparison     ::= term ( ( '==' | '!=' | '<' | '<=' | '>' | '>=' ) term )* ;
+term           ::= factor ( ( '+' | '-' ) factor )* ;
+factor         ::= unary ( ( '*' | '/' ) unary )* ;
+unary          ::= ( '!' | '-' ) unary | call ;
+call           ::= primary ( '.' IDENTIFIER )* ; (* Field access, e.g., a.b.c *)
+
+primary        ::= IDENTIFIER
+               | literal
+               | recordExpression
+               | tupleExpression
+               | '(' expression ')' (* Grouped expression *)
+               ;
+
+recordExpression ::= IDENTIFIER '{' [ namedArgument { ',' namedArgument } [','] ] '}';
+tupleExpression ::= '(' expression ',' [ expression { ',' expression } [','] ] ')'; (* e.g., (a,) or (a,b,c) *)
+
 literal ::= STRING_LITERAL | INTEGER_LITERAL | FLOAT_LITERAL | 'true' | 'false';
 
 (* Lexical Tokens *)
 IDENTIFIER ::= /* e.g., my_variable, MyType */
 STRING_LITERAL ::= /* e.g., "hello world" */
-INTEGER_LITERAL ::= /* e.g., 101, -42 */
-FLOAT_LITERAL ::= /* e.g., 3.14, -0.5 */
+INTEGER_LITERAL ::= /* e.g., 101, 42 */
+FLOAT_LITERAL ::= /* e.g., 3.14, 0.5 */
 
 ```

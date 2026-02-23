@@ -13,6 +13,7 @@ pub enum Token {
     If,
     True,
     False,
+    As,
 
     // Single-character Symbols
     LeftParen,  // (
@@ -23,12 +24,16 @@ pub enum Token {
     Comma,      // ,
     Semicolon,  // ;
     Plus,       // +
+    Minus,      // -
+    Star,       // *
+    Slash,      // /
+    Dot,        // .
 
     // One or two character Symbols
     Bang,               // !
     BangEqual,          // !=
     Equal,              // =
-    // TODO: Add EqualEqual ==
+    EqualEqual,         // ==
     GreaterThan,        // >
     GreaterThanOrEqual, // >=
     LessThan,           // <
