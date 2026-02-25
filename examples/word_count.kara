@@ -1,0 +1,57 @@
+// examples/word_count.kara
+
+// --- Core Logic (Pure) ---
+
+// A function to split a string into a list of words.
+// We'''ll assume the standard library provides a `List<String>` type.
+fn split_into_words(content: String) -> List<String> {
+    // How do we do this? We need a way to split a string.
+    // Let'''s assume a built-in function `string::split`.
+    string::split(content, " ")
+}
+
+// A function to count the items in a list.
+fn count_items<T>(items: List<T>) -> i64 {
+    // How do we get the length?
+    // Let'''s assume a built-in function `list::length`.
+    list::length(items)
+}
+
+// --- Main Process (Impure) ---
+
+flow main(args: List<String>) {
+    // 1. Get the filename from the command-line arguments.
+    // We need a way to access list elements. Let'''s assume `list::get`.
+    // We also need to handle the case where the argument is missing.
+    // This points to the need for an `Option` or `Result` type. Let'''s use `Option`.
+    let filename: Option<String> = list::get(args, 1);
+
+    // 2. What if the filename is missing? We need to stop and print an error.
+    if filename is None {
+        ("Usage: word_count <filename>") -> print;
+        // How do we stop execution? We need a way to exit.
+        // Let'''s assume an `exit` flow.
+        (1) -> exit;
+    }
+
+    // 3. We have a filename. Let'''s read the file.
+    // This is an impure operation, so it must be a `flow`.
+    // It can also fail. This reinforces the need for a `Result` type.
+    let file_content_result: Result<String, Error> = (filename) -> read_file;
+
+    // 4. Handle the result of reading the file.
+    if file_content_result is Error(e) {
+        ("Error reading file: ") -> print;
+        (e) -> print;
+        (1) -> exit;
+    }
+
+    // 5. We have the content. Let'''s do the pure computation.
+    let file_content: String = file_content_result as Ok; // Need a way to unwrap the value.
+    (file_content) -> split_into_words -> (words);
+    (words) -> count_items -> (count);
+
+    // 6. Print the final result.
+    ("Word count: ") -> print;
+    (count) -> print;
+}
