@@ -8,29 +8,101 @@ While the source code is the ultimate source of truth, this document serves as a
 
 The `karac` compiler follows a traditional pipeline model. Source code is progressively transformed through a series of distinct stages, with the output of one stage becoming the input for the next.
 
-The primary stages are:
+The strategy is **interpreter first, compiler second**: we validate language semantics with a tree-walk interpreter before investing in LLVM code generation. This lets us iterate on language design rapidly.
 
-1.  **Lexical Analysis (Lexing):** The raw source code text is converted into a linear sequence of tokens. This is handled by the `lexer` module.
-2.  **Syntactic Analysis (Parsing):** The sequence of tokens is organized into a hierarchical representation of the code's structure, known as an Abstract Syntax Tree (AST). This will be handled by the `parser` module.
-3.  **Semantic Analysis & Graph Building:** The AST is traversed to ensure the program is logically consistent and to build the dataflow graph. This involves checking types, resolving names, and enforcing language rules.
-4.  **Intermediate Representation (IR) Generation:** The validated dataflow graph is translated into a lower-level, machine-independent representation.
-5.  **Code Generation (Backend):** The IR is used to generate the final executable code or target output.
+### Phase 1: Interpreter Pipeline (Current Target)
+
+```
+Source Code (.kara)
+    │
+    ▼
+┌──────────┐
+│  Lexer   │  src/lexer.rs — converts source text to tokens
+└────┬─────┘
+     │ Vec<Token>
+     ▼
+┌──────────┐
+│  Parser  │  src/parser.rs (planned) — builds AST from tokens
+└────┬─────┘
+     │ AST
+     ▼
+┌──────────────┐
+│  Semantic    │  src/analyzer.rs (planned) — type checking,
+│  Analyzer    │  purity enforcement, semantic type validation
+└────┬─────────┘
+     │ Validated AST
+     ▼
+┌──────────────┐
+│  Tree-Walk   │  src/interpreter.rs (planned) — executes
+│  Interpreter │  the AST directly
+└──────────────┘
+```
+
+### Phase 2: Compiled Pipeline (Future)
+
+```
+     Validated AST
+     │
+     ▼
+┌──────────────┐
+│  LLVM IR     │  src/codegen.rs (future) — emits LLVM IR
+│  Generator   │  via the inkwell crate
+└────┬─────────┘
+     │ LLVM IR
+     ▼
+┌──────────────┐
+│  LLVM        │  off-the-shelf LLVM — optimization passes
+│  Backend     │  and native code generation
+└──────────────┘
+     │
+     ▼
+  Native Binary
+```
 
 ---
 
 ## 2. Core Components
 
-### Stage 1: The Lexer (`src/lexer.rs`)
+### Stage 1: The Lexer (`src/lexer.rs`) — Complete
 
--   **Responsibility:** To perform lexical analysis.
--   **Input:** A `String` containing the raw Kāra source code.
--   **Output:** A stream of `Token` enums.
+-   **Responsibility:** Lexical analysis — converting raw source text into a stream of tokens.
+-   **Input:** A `&str` containing Kāra source code.
+-   **Output:** A stream of `Token` enums (via repeated calls to `next_token()`).
 
 #### Implementation Details
 
-The lexer is implemented as a `Lexer` struct that scans the input `String`. It is designed to be fast and efficient.
+The lexer is implemented as a `Lexer` struct that scans the input source.
 
--   **Unicode Support:** The lexer operates on a `Vec<char>` to correctly handle multi-byte Unicode characters.
--   **State:** The lexer maintains its state through `position` and `read_position` pointers into the character vector. This allows for simple lookahead (via `peek_char`) which is necessary for distinguishing between tokens like `->` and single-character symbols.
--   **Tokenization Logic:** The core logic resides in the `next_token()` method, which forms the main loop of the lexer. It dispatches to helper methods for reading complex tokens like identifiers, numbers, and strings.
--   **Keyword Mapping:** A `lookup_ident` function is used to distinguish between user-defined identifiers and reserved keywords (e.g., `record`, `flow`, `let`).
+-   **Byte-Level Operation:** The lexer operates directly on a byte slice (`&[u8]`) of the source code. This avoids allocating a separate `Vec<char>`, making it more memory-efficient.
+-   **State:** The lexer maintains its state through `start` and `current` index pointers into the byte slice, plus a `line` counter for error reporting.
+-   **Tokenization Logic:** The core logic resides in `scan_token()`, which dispatches on the current byte. It uses `match_char()` for single-byte lookahead to distinguish multi-character tokens (e.g., `->`, `!=`, `==`, `<=`, `>=`).
+-   **Keyword Matching:** The `identifier_type()` method maps reserved words (`fn`, `flow`, `record`, `type`, `let`, `if`, `true`, `false`, `as`) to their keyword tokens.
+-   **Whitespace and Comments:** Whitespace (spaces, tabs, carriage returns, newlines) and single-line comments (`//`) are skipped in a tight loop within `skip_whitespace()`.
+
+### Stage 2: The Parser (`src/parser.rs`) — Planned
+
+-   **Responsibility:** Syntactic analysis — organizing tokens into an Abstract Syntax Tree (AST).
+-   **Input:** A `Vec<Token>` from the lexer.
+-   **Output:** An AST representing the program structure.
+-   **Approach:** Recursive-descent parser, following the EBNF grammar defined in the language specification (Chapter 2).
+
+### Stage 3: The Semantic Analyzer (`src/analyzer.rs`) — Planned
+
+-   **Responsibility:** Validating that the AST is logically correct.
+-   **Key checks:**
+    -   **Semantic type enforcement:** Ensuring that semantic types (e.g., `UserId`, `ProductId`) are treated as distinct at all function/flow boundaries.
+    -   **Purity checking:** Verifying that `fn` blocks contain no side-effects.
+    -   **Immutability enforcement:** Verifying that `let` bindings are never reassigned.
+    -   **Name resolution:** Building a symbol table, resolving identifiers to their declarations.
+
+### Stage 4: The Interpreter (`src/interpreter.rs`) — Planned
+
+-   **Responsibility:** Executing the validated AST directly.
+-   **Approach:** Tree-walk evaluation — recursively walk AST nodes and compute results.
+-   **Purpose:** Validate language semantics, enable rapid iteration on language design, provide a working Kāra execution environment before LLVM integration.
+
+### Stage 5: LLVM Code Generation (`src/codegen.rs`) — Future
+
+-   **Responsibility:** Translating the validated AST into LLVM IR.
+-   **Approach:** Use the `inkwell` crate (Rust bindings to the LLVM C API) to emit LLVM IR, then hand off to LLVM for optimization and native code generation.
+-   **Project Sutra:** Semantic types are compiled as zero-cost abstractions via monomorphization. The type context guides code generation (e.g., generating specialized function variants per semantic type) but is completely erased in the final binary.

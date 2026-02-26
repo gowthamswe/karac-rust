@@ -2,20 +2,90 @@
 
 This document records the key architectural and syntactical decisions for the Kāra language. It serves as a reference for *why* the language is designed the way it is.
 
-## 1. The Core Philosophy: An Intent-Driven Language
+## 1. The Origin: Inspiration from Sanskrit
+
+Kāra's design is inspired by the Sanskrit language. In Sanskrit, every noun carries embedded context through its morphological inflection (vibhakti). The case endings tell you what role a word plays in a sentence — subject, object, instrument, location — regardless of where the word appears. Word order is free because the meaning is encoded in the word itself.
+
+Most programming languages work the opposite way: data is raw and context-free. An `i64` is just a number. Whether it represents a user ID, a product count, or a temperature is known only to the programmer. The compiler sees no difference between them and will happily let you add a user ID to a temperature. This is a class of logical bug that no mainstream language prevents.
+
+Kāra asks: **what if data carried its own semantic context, the way Sanskrit words carry their own grammatical role?** If the compiler always knows what a piece of data *means* — not just what it *is* — it can prevent an entire category of errors that other languages cannot catch.
+
+## 2. The Core Principle: Context at Boundaries
+
+Not all data needs explicit context. A loop counter, an intermediate arithmetic result, or a local scratch variable — these are like Sanskrit's indeclinable particles (avyaya). Their role is obvious from usage. Forcing the programmer to annotate every local variable with semantic meaning would be busywork.
+
+But data that **crosses a boundary** — function parameters, return values, record fields, I/O — is where semantic errors happen. This is where a `UserId` gets confused with a `ProductId`, where a price in cents gets treated as a price in dollars.
+
+Kāra's rule is: **context is mandatory at boundaries, inferred locally.**
+
+```
+// At the boundary: parameters and return type carry semantic context.
+// UserId and ProductId are both i64 underneath, but the compiler
+// treats them as distinct types. Mixing them is a compile error.
+fn lookup_product(user: UserId, product: ProductId) -> PriceInCents {
+    // Inside the body: local computation is context-free.
+    // These are just numbers. No annotation required.
+    let base = get_base_price(product);
+    let discount = base * discount_rate;
+    let final_price = base - discount;
+
+    // At the return boundary: the compiler checks that final_price
+    // can satisfy the declared return type PriceInCents.
+    final_price
+}
+```
+
+This gives us:
+
+- **Enforcement where it matters:** Boundaries are where semantic bugs happen.
+- **No busywork:** Local variables, counters, and intermediates need no annotation.
+- **Gradual adoption:** Start with a few semantic types and add more as your domain model matures.
+
+This is analogous to Rust's approach to lifetimes: the compiler infers most lifetimes automatically and only asks the programmer to annotate when it can't figure things out. Kāra does the same for semantic context.
+
+## 3. Semantic Types: How Context Works
+
+A semantic type is defined with the `type` keyword. It creates a new, distinct type backed by a primitive:
+
+```
+type UserId i64;
+type ProductId i64;
+type PriceInCents i64;
+type Temperature f64;
+```
+
+These are all primitives underneath, but the compiler treats them as incompatible types at every boundary. You cannot pass a `UserId` where a `ProductId` is expected.
+
+### Context Conversion
+
+When raw data needs to gain semantic context (e.g., parsing user input into a `UserId`), this must happen through an explicit conversion — a function that validates and transforms:
+
+```
+fn parse_user_id(raw: i64) -> Result<UserId, ValidationError> {
+    if raw > 0 {
+        Ok(raw as UserId)
+    } else {
+        Err(ValidationError { message: "User ID must be positive" })
+    }
+}
+```
+
+Explicit conversion functions are the **only** way to cross context boundaries. This makes every boundary crossing visible, auditable, and testable. The `as` keyword marks the point where raw data gains semantic meaning.
+
+## 4. The Core Philosophy: An Intent-Driven Language
 
 Kāra is an **intent-driven language**. Unlike traditional imperative languages where the programmer provides a step-by-step sequence of commands, a Kāra programmer **declares their intent** by describing the flow of data and the transformations upon it.
 
 The programmer describes the relationships between data and operations, not the order in which they must be executed. This allows the Kāra compiler to build a data dependency graph and optimize execution in ways that are impossible in traditional languages, including automatic parallelism, out-of-order execution, and lazy evaluation.
 
-## 2. The Core Problem: Separating "What" from "How"
+## 5. The Core Problem: Separating "What" from "How"
 
 A systems language needs to express both high-level orchestration (the "what") and low-level implementation (the "how"). Kāra solves this by providing different constructs for each, forcing a separation of concerns that is critical for both readability and compiler optimization.
 
 -   **The "What" (Process):** Describing the high-level story of a program, including state, I/O, and side-effects. This is the job of a `flow`.
 -   **The "How" (Calculation):** Defining a pure, reusable, and complex algorithm. This is the job of an `fn`.
 
-## 3. The Core Constructs: `record`, `fn`, and `flow`
+## 6. The Core Constructs: `record`, `fn`, and `flow`
 
 Kāra's structure is built on three, and only three, top-level constructs. They cannot be nested.
 
@@ -37,7 +107,7 @@ Kāra's structure is built on three, and only three, top-level constructs. They 
 -   **The Promise:** A `flow` is **impure**. The compiler knows the sequence of operations can matter and that it interacts with the outside world.
 -   **The Consequence:** The compiler is more conservative in its optimizations.
 
-## 4. Syntax: Explicitness vs. Ergonomics
+## 7. Syntax: Explicitness vs. Ergonomics
 
 Kāra's syntax is designed to balance two competing goals: giving the compiler an explicit dataflow graph for optimization, while providing the developer with an ergonomic and familiar coding experience.
 
@@ -45,7 +115,7 @@ Kāra's syntax is designed to balance two competing goals: giving the compiler a
 
 The `->` operator is used for calling any named function (`fn` or `flow`). This syntax makes the high-level data dependencies in a program explicit and easy to visualize.
 
-```rust
+```
 // Calling a pure function to build a data structure.
 ("user-123") -> BuildGetUserRequest -> (request_plan);
 
@@ -57,7 +127,7 @@ The `->` operator is used for calling any named function (`fn` or `flow`). This 
 
 For common arithmetic and logical operations, forcing every step into a separate `->` call is overly verbose. Therefore, Kāra supports familiar **inline expressions**.
 
-```rust
+```
 // This readable expression...
 let dist_sq = (dx * dx) + (dy * dy);
 
@@ -67,11 +137,11 @@ let dist_sq = (dx * dx) + (dy * dy);
 
 This dual approach provides the best of both worlds: high-level dataflow is made explicit with `->`, while common low-level calculations remain compact and readable.
 
-## 5. State: Immutable by Default
+## 8. State: Immutable by Default
 
 The `let` keyword is used to bind a name to the result of an expression. This binding is **immutable**. Once a name is bound, it cannot be reassigned.
 
-```rust
+```
 // This is a valid binding.
 let a = 10;
 
@@ -83,7 +153,7 @@ This rule is the key to the entire hybrid syntax. It prevents imperative-style m
 
 This strict immutability is what allows the compiler to safely build its dataflow graph without ambiguity.
 
-## 6. The Purity Guarantee and Its Consequences
+## 9. The Purity Guarantee and Its Consequences
 
 The separation between `fn` and `flow` is a hard, compile-time guarantee.
 

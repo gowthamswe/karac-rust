@@ -3,5 +3,4 @@
 - [Language Specification](./chapter_2.md)
 - [Language Concepts](./chapter_3.md)
 - [Runtime and I/O](./chapter_4.md)
-- [Parsing and AST](./chapter_5.md)
-- [The Kāra CLI](./chapter_6.md)
+- [fn and flow](./chapter_5.md)

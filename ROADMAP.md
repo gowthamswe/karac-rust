@@ -4,45 +4,72 @@ This document outlines the planned features and development milestones for the `
 
 ## Core Philosophy
 
-Development will proceed in layers, focusing on building a solid foundation at each step. We will prioritize correctness and a robust testing strategy.
+Kāra draws its inspiration from the Sanskrit language, where every word carries embedded context (vibhakti) so that meaning is unambiguous regardless of word order. In the same way, Kāra aims to make data self-describing: every piece of data that crosses a boundary carries semantic context that the compiler can verify and enforce.
+
+Development proceeds in layers, focusing on building a solid foundation at each step. We prioritize correctness and a robust testing strategy. We use a **tree-walk interpreter first** approach: validate language semantics with an interpreter before investing in LLVM code generation.
 
 ---
 
-### Version 0.1.0: Core Parser & Lexer (Current)
+### Phase 1: Lexer (Complete)
 
-**Goal:** To have a fully compliant lexer and a foundational parser that can read and understand the complete Kāra syntax.
+**Goal:** A fully compliant lexer that tokenizes Kāra source code.
 
-- [x] **Lexer:** The lexer is complete and recognizes all keywords, symbols, and literals defined in the `DESIGN_RATIONALE.md`.
-- [ ] **AST (Abstract Syntax Tree):** Define the core Rust structs that will represent the Kāra language's structure in memory (e.g., `Sutra`, `Record`, `Flow`, `Statement`, `Expression`, etc.).
-- [ ] **Parser:** Build a parser to construct an Abstract Syntax Tree (AST) that represents `Record` definitions, `Sūtra` definitions, and `flow` blocks.
-- [ ] **AST Validation:** Ensure the parser correctly builds AST nodes for our new, complete syntax.
+- [x] **Lexer:** Recognizes all keywords, symbols, and literals defined in the language specification.
+- [x] **Lexer Tests:** Unit and integration tests validating correct tokenization.
 
-### Version 0.2.0: Semantic Analysis & Type Checking
+### Phase 2: Parser & AST
 
-**Goal:** To build a semantic analyzer that can validate the correctness of the AST.
+**Goal:** A parser that constructs an Abstract Syntax Tree (AST) from the token stream.
 
-- [ ] **Symbol Table:** Implement a symbol table to track identifiers, types, and scopes.
-- [ ] **Type Checker:** Walk the AST and enforce Kāra's static typing rules. Ensure that actions are called with the correct types and that variable assignments are valid.
-- [ ] **Error Reporting:** Implement a robust error reporting system to give clear, actionable feedback to the developer about type mismatches or undefined variables.
+- [ ] **AST Definition:** Define Rust structs representing the language's structure (`Record`, `Flow`, `Fn`, `Statement`, `Expression`, `SemanticType`, etc.).
+- [ ] **Parser:** Build a recursive-descent parser that constructs the AST from tokens.
+- [ ] **Span Tracking:** Attach source location (line, column, offset) to every token and AST node for error reporting.
+- [ ] **Parser Tests:** Validate correct AST construction for all language constructs.
 
-### Version 0.3.0: LLVM IR Generation
+### Phase 3: Semantic Analysis & Type Checking
 
-**Goal:** To translate the validated AST into LLVM Intermediate Representation (IR).
+**Goal:** A semantic analyzer that validates program correctness, with a focus on the context-at-boundaries model.
 
-- [ ] **LLVM Bridge:** Create the initial bridge to transpile the AST into basic LLVM IR. The first goal is to compile a simple `Sūtra` that performs integer arithmetic.
-- [ ] **Variable Emitter:** Implement the logic to emit LLVM IR for variable declarations, assignments, and lookups.
-- [ ] **Action Emitter:** Translate Kāra's data-flow actions (`->`) into LLVM instructions.
+- [ ] **Symbol Table:** Track identifiers, semantic types, and scopes.
+- [ ] **Basic Type Checker:** Enforce static typing rules — correct parameter types, valid assignments, return type matching.
+- [ ] **Semantic Type Enforcement:** Enforce that semantic types (e.g., `type UserId i64`) are distinct at all function/flow boundaries. A `UserId` cannot be passed where a `ProductId` is expected, even though both are `i64` underneath.
+- [ ] **Purity Checker:** Verify that `fn` blocks contain no side-effects (no I/O calls, no `flow` calls).
+- [ ] **Immutability Enforcement:** Verify that `let` bindings are never reassigned.
+- [ ] **Error Reporting:** Clear, actionable error messages with source locations.
 
-### Version 0.4.0: End-to-End (E2E) Testing Framework
+### Phase 4: Tree-Walk Interpreter
 
-**Goal:** To create a test harness that compiles `.kara` files and verifies their output, proving the compiler works from source to execution.
+**Goal:** Execute Kāra programs directly from the AST, validating language semantics without the complexity of code generation.
 
-- [ ] **Test Runner:** Build a test runner within `cargo test` that can discover and execute `.kara` files from a dedicated test directory.
-- [ ] **`karac` Execution:** The runner will execute the `karac` binary on a source `.kara` file.
-- [ ] **Assertion:** The runner will compile the resulting LLVM IR, execute the binary, and assert that its output (e.g., stdout) matches the expected output.
+- [ ] **Expression Evaluator:** Recursively walk AST nodes and evaluate expressions (arithmetic, comparison, boolean logic).
+- [ ] **Flow Executor:** Execute `flow` blocks, including `let` bindings, `if` statements, pipeline calls, and recursive flows.
+- [ ] **Function Executor:** Execute pure `fn` blocks.
+- [ ] **Built-in Functions:** Implement core built-ins (`Print`, `Read`, `ToString`, `ParseI64`).
+- [ ] **E2E Tests:** Run `.kara` programs through the interpreter and verify stdout output.
+
+### Phase 5: LLVM Code Generation
+
+**Goal:** Replace the tree-walk interpreter with LLVM IR generation for compiled, high-performance output.
+
+- [ ] **LLVM Bridge:** Integrate the `inkwell` crate to emit LLVM IR from the validated AST.
+- [ ] **Variable Emitter:** Emit LLVM IR for variable declarations and lookups.
+- [ ] **Function Emitter:** Translate `fn` and `flow` blocks into LLVM functions.
+- [ ] **Pipeline Emitter:** Translate `->` pipeline calls into LLVM call instructions.
+- [ ] **Semantic Type Monomorphization (Project Sutra):** Compile semantic types as zero-cost abstractions via monomorphization — context guides code generation but is erased in the final binary.
+
+### Phase 6: End-to-End Testing & CLI
+
+**Goal:** A complete toolchain from `.kara` source file to running binary.
+
+- [ ] **CLI (`karac`):** A command-line binary that takes a `.kara` file, compiles it, and produces an executable.
+- [ ] **E2E Test Runner:** A `cargo test` harness that compiles `.kara` files, runs the output, and asserts on stdout.
+- [ ] **Error Formatting:** Polished, rustc-style error messages with source snippets and suggestions.
 
 ### Future Goals
 
-- **Conditional Logic:** Introduce declarative conditionals.
-- **Standard Library:** Build a core library of essential `Sūtras` (e.g., `Print`, `Sqrt`, `Compare`).
-- **Memory Management:** Implement the full memory model described in the language philosophy.
+- **`match` Expressions:** Pattern matching on `Result`, `Option`, and user-defined enums.
+- **Generics:** Lightweight `<T>` generics for functions and data structures.
+- **Standard Library:** Core types (`List<T>`, `Result<T, E>`, `Option<T>`) and functions (`string::split`, `list::length`, etc.).
+- **Automatic Parallelism:** Compiler-driven parallel execution of independent `fn` calls within a `flow`.
+- **Tail-Call Optimization:** Guaranteed TCO for recursive flows to prevent stack overflow.
+- **Memory Management:** Full memory model as described in the language philosophy.

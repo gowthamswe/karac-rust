@@ -1,19 +1,42 @@
 # Kāra
 
-**Kāra is an experimental, intent-driven programming language for building robust and high-performance systems.**
+**Kāra is an experimental, intent-driven programming language where data carries its own semantic context.**
 
-Kāra combines the performance of a compiled systems language with the high-level clarity of a dataflow paradigm. Instead of writing a sequence of commands, you declare the flow of data and the transformations upon it, allowing the compiler to generate a highly optimized, parallelized execution graph.
+Inspired by the Sanskrit language — where every word carries embedded grammatical context (vibhakti) so that meaning is unambiguous regardless of word order — Kāra makes semantic context a first-class part of the type system. The compiler knows not just what your data *is*, but what it *means*, catching an entire class of logical bugs that no mainstream language prevents.
 
 ---
 
+## The Core Idea
+
+In most languages, an `i64` is just a number. Whether it's a user ID, a product count, or a temperature is known only to the programmer. The compiler sees no difference and will happily let you pass one where the other is expected.
+
+In Kāra, data that crosses a boundary — function parameters, return values, record fields — carries semantic context that the compiler enforces:
+
+```rust
+type UserId i64;
+type ProductId i64;
+
+// The compiler treats UserId and ProductId as distinct types.
+// Passing a UserId where a ProductId is expected is a compile error,
+// even though both are i64 underneath.
+fn lookup_product(user: UserId, product: ProductId) -> PriceInCents {
+    let base = get_base_price(product);
+    let discount = base * discount_rate;
+    base - discount
+}
+```
+
+Inside function bodies, local computation is context-free — no annotation required. Context is mandatory at boundaries, inferred locally. This is analogous to how Rust infers most lifetimes and only asks for annotations when it can't figure things out.
+
 ## Key Concepts
 
+-   **Sanskrit-Inspired:** Data carries semantic context, the way Sanskrit words carry grammatical role. Meaning is unambiguous at every boundary.
+-   **Context at Boundaries:** Semantic types are enforced at function/flow boundaries. Local computation is annotation-free.
 -   **Intent-Driven:** You describe the "what" (the dataflow), and the compiler figures out the "how" (the execution order).
--   **Explicit Dataflow:** The `->` operator makes the high-level architecture of your program visible and unambiguous.
 -   **Immutable by Default:** All data is immutable, eliminating entire classes of bugs related to state management.
 -   **Pure Functions (`fn`):** Reusable, stateless building blocks for pure calculation.
 -   **Impure Processes (`flow`):** The orchestration layer for managing state, I/O, and side-effects.
--   **Recursive Loops:** Iteration is handled elegantly and explicitly through recursive `flow` calls.
+-   **Recursive Iteration:** All loops are expressed as recursive `flow` calls, preserving immutability.
 
 ## Quick Example
 
@@ -46,10 +69,14 @@ flow main {
 
 ## Project Status
 
-The language design is largely solidified. We are now beginning the implementation of the compiler.
+The compiler is in early development. The lexer is complete; the parser and type checker are next.
 
--   **For a detailed look at the language design, please read the [Kāra Book](docs/book/src/introduction.md).**
--   **To see the latest design decisions, please see the [CHANGELOG.md](CHANGELOG.md).**
+We are taking a **tree-walk interpreter first** approach: validate language semantics with an interpreter before building LLVM code generation. See the [Roadmap](ROADMAP.md) for details.
+
+-   **For the language design, read the [Kāra Book](docs/book/src/chapter_1.md).**
+-   **For design decisions, see the [Design Rationale](docs/DESIGN_RATIONALE.md).**
+-   **For the compilation strategy, see [Project Sutra](docs/book/src/00_compiler_architecture_decision.md).**
 
 ## Getting Started
-This project is currently in the compiler development phase. To explore the language design, please refer to the documentation in the `/docs` directory.
+
+This project is currently in the compiler development phase. To explore the language design, refer to the documentation in the `/docs` directory.
