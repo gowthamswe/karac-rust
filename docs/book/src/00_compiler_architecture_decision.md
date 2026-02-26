@@ -16,7 +16,7 @@ This vision — data as self-describing, context-carrying values — drives ever
 
 A core design decision in any new programming language is its compilation strategy. For Kāra, this decision determines how we realize the vision of semantic, context-carrying data without sacrificing performance.
 
-**Project Sutra** (from the Sanskrit सूत्र, meaning "thread" or "rule") is the codename for the entire Kāra compiler project. We evaluated three compilation architectures and chose a phased approach: **tree-walk interpreter first** for rapid iteration on language semantics, then **data-centric AOT compilation** for production performance.
+We evaluated three compilation architectures and chose a phased approach: **tree-walk interpreter first** for rapid iteration on language semantics, then **data-centric AOT compilation** for production performance.
 
 ---
 

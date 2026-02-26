@@ -10,6 +10,8 @@ Most programming languages work the opposite way: data is raw and context-free. 
 
 Kāra asks: **what if data carried its own semantic context, the way Sanskrit words carry their own grammatical role?** If the compiler always knows what a piece of data *means* — not just what it *is* — it can prevent an entire category of errors that other languages cannot catch.
 
+The compiler project is internally codenamed **Project Sutra** (from the Sanskrit सूत्र, meaning "thread" or "rule").
+
 ## 2. The Core Principle: Context at Boundaries
 
 Not all data needs explicit context. A loop counter, an intermediate arithmetic result, or a local scratch variable — these are like Sanskrit's indeclinable particles (avyaya). Their role is obvious from usage. Forcing the programmer to annotate every local variable with semantic meaning would be busywork.
