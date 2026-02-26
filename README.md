@@ -75,7 +75,7 @@ We are taking a **tree-walk interpreter first** approach: validate language sema
 
 -   **For the language design, read the [Kāra Book](docs/book/src/chapter_1.md).**
 -   **For design decisions, see the [Design Rationale](docs/DESIGN_RATIONALE.md).**
--   **For the compilation strategy, see [Project Sutra](docs/book/src/00_compiler_architecture_decision.md).**
+-   **For the compilation strategy, see the [Compiler Architecture](docs/book/src/00_compiler_architecture_decision.md).**
 
 ## Getting Started
 

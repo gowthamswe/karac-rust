@@ -55,7 +55,7 @@ Development proceeds in layers, focusing on building a solid foundation at each 
 - [ ] **Variable Emitter:** Emit LLVM IR for variable declarations and lookups.
 - [ ] **Function Emitter:** Translate `fn` and `flow` blocks into LLVM functions.
 - [ ] **Pipeline Emitter:** Translate `->` pipeline calls into LLVM call instructions.
-- [ ] **Semantic Type Monomorphization (Project Sutra):** Compile semantic types as zero-cost abstractions via monomorphization — context guides code generation but is erased in the final binary.
+- [ ] **Semantic Type Monomorphization:** Compile semantic types as zero-cost abstractions via monomorphization — context guides code generation but is erased in the final binary.
 
 ### Phase 6: End-to-End Testing & CLI
 

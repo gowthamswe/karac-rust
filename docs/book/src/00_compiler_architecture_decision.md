@@ -16,7 +16,7 @@ This vision — data as self-describing, context-carrying values — drives ever
 
 A core design decision in any new programming language is its compilation strategy. For Kāra, this decision determines how we realize the vision of semantic, context-carrying data without sacrificing performance.
 
-We evaluated three architectures and chose a phased approach: **tree-walk interpreter first** for rapid iteration on language semantics, then **Project Sutra** (data-centric AOT compilation) for production performance.
+**Project Sutra** (from the Sanskrit सूत्र, meaning "thread" or "rule") is the codename for the entire Kāra compiler project. We evaluated three compilation architectures and chose a phased approach: **tree-walk interpreter first** for rapid iteration on language semantics, then **data-centric AOT compilation** for production performance.
 
 ---
 
@@ -50,13 +50,13 @@ This is the model used by V8 (JavaScript), the JVM (Java), and BEAM (Erlang). Th
 
 ---
 
-## Option 3: Project Sutra (Chosen)
+## Option 3: Data-Centric AOT Compilation (Chosen)
 
-Named after the Sanskrit word for "thread" or "rule" (सूत्र), Project Sutra is our chosen compilation strategy. It combines AOT performance with the expressive power of semantic types by making them a **zero-cost, compile-time abstraction.**
+This is our chosen compilation strategy. It combines AOT performance with the expressive power of semantic types by making them a **zero-cost, compile-time abstraction.**
 
-### How It Works: Data-Centric Compilation
+### How It Works
 
-Inspired by Rust's implementation of generics, Project Sutra uses monomorphization to compile semantic types away entirely:
+Inspired by Rust's implementation of generics, the data-centric approach uses monomorphization to compile semantic types away entirely:
 
 1.  **Context in the Type System:** A piece of data's semantic context is not a runtime value — it is part of its **type**. A price is not an `f64`; it is a `PriceInCents`. This information exists only for the compiler.
 
@@ -72,11 +72,11 @@ Inspired by Rust's implementation of generics, Project Sutra uses monomorphizati
 
 ### Development Approach
 
-To reach Project Sutra incrementally, we take a phased approach:
+We take a phased approach to building the compiler:
 
 1.  **Phase 1 (Current): Tree-Walk Interpreter.** Execute Kāra programs by walking the AST directly. This validates language semantics — semantic type enforcement, purity checking, immutability — without the complexity of code generation. The interpreter is slow but correct, and allows rapid iteration on language design.
 
-2.  **Phase 2 (Future): LLVM Code Generation.** Replace the interpreter with LLVM IR generation via the `inkwell` crate. This is where Project Sutra's monomorphization is implemented and the zero-cost abstraction promise is fulfilled.
+2.  **Phase 2 (Future): LLVM Code Generation.** Replace the interpreter with LLVM IR generation via the `inkwell` crate. This is where monomorphization is implemented and the zero-cost abstraction promise is fulfilled.
 
 The lexer, parser, and semantic analyzer are shared between both phases. Only the execution backend changes.
 

@@ -105,4 +105,4 @@ The lexer is implemented as a `Lexer` struct that scans the input source.
 
 -   **Responsibility:** Translating the validated AST into LLVM IR.
 -   **Approach:** Use the `inkwell` crate (Rust bindings to the LLVM C API) to emit LLVM IR, then hand off to LLVM for optimization and native code generation.
--   **Project Sutra:** Semantic types are compiled as zero-cost abstractions via monomorphization. The type context guides code generation (e.g., generating specialized function variants per semantic type) but is completely erased in the final binary.
+-   **Monomorphization:** Semantic types are compiled as zero-cost abstractions via monomorphization. The type context guides code generation (e.g., generating specialized function variants per semantic type) but is completely erased in the final binary.
