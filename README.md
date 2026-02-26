@@ -52,5 +52,4 @@ The language design is largely solidified. We are now beginning the implementati
 -   **To see the latest design decisions, please see the [CHANGELOG.md](CHANGELOG.md).**
 
 ## Getting Started
-
 This project is currently in the compiler development phase. To explore the language design, please refer to the documentation in the `/docs` directory.
